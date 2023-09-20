@@ -1,8 +1,8 @@
 package com.example.planningpoker;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
-import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -28,11 +28,18 @@ import reactor.core.publisher.Sinks;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
+import static java.util.Objects.isNull;
+
 @SpringBootApplication
 public class PlanningPokerApplication {
 
 	public static void main(String[] args) {
 		SpringApplication.run(PlanningPokerApplication.class, args);
+	}
+
+	@Bean
+	Map<UUID, Sinks.Many<String>> roomSinks() {
+		return new ConcurrentHashMap<>();
 	}
 }
 
@@ -41,10 +48,11 @@ record Room(UUID uuid, List<String> cards, List<Member> members){};
 
 @Service
 @RequiredArgsConstructor
+//TODO everything from here to RoomRepository
 class MemberRepository {
 
 	final RoomRepository roomRepository;
-	public Mono<Member> addMemberToRoom(UUID roomId, Member member) {
+	public Mono<Member> addMemberToTheRoom(UUID roomId, Member member) {
 		return roomRepository
 				.read(roomId)
 				.map(room -> {
@@ -55,19 +63,22 @@ class MemberRepository {
 				.map(room -> member)
 				.flatMap(Mono::just);
 	}
-	public Flux<Member> allMember(UUID romId) {
+
+	public Flux<Member> allMemberFromRoom(UUID roomId) {
 		return roomRepository
-				.read(romId)
+				.read(roomId)
 				.flatMapIterable(Room::members);
 	}
+
 }
 
 @Component
 @RequiredArgsConstructor
 class RoomRepository {
 	private static final List<Room> rooms = new ArrayList<>();
+	//TODO move this to a centralise place
 	private static final Map<UUID, Sinks.Many<String>> roomSinks = new ConcurrentHashMap<>();
-
+	//TODO move this to a centralise place
 	public Sinks.Many<String> roomSink(UUID roomId) {
 		return roomSinks.get(roomId);
 	}
@@ -91,10 +102,25 @@ class RoomRepository {
 					return room;
 				});
 	}
+
+	public Mono<Boolean> notifyMemberDetailsToTheRoom(UUID roomId) {
+		ObjectMapper objectMapper = new ObjectMapper();
+		return read(roomId)
+				.map(Room::members)
+				.<String>handle((members, sink) -> {
+					try {
+						sink.next(objectMapper.writeValueAsString(members));
+					} catch (JsonProcessingException e) {
+						sink.error(new RuntimeException(e));
+					}
+				})
+				.map(membersJSON -> roomSink(roomId).tryEmitNext(membersJSON))
+				.map(Sinks.EmitResult::isSuccess);
+	}
 }
 
 @Controller
-class PlanningPokerController {
+class Controllers {
 
 	@GetMapping("/")
 	public Mono<String> index() {
@@ -104,7 +130,8 @@ class PlanningPokerController {
 
 @Component
 @RequiredArgsConstructor
-class PlanningPokerRestController {
+class RestControllers {
+	final Map<UUID, Sinks.Many<String>> roomSinks;
 	final RoomRepository roomRepository;
 	final MemberRepository memberRepository;
 
@@ -120,8 +147,15 @@ class PlanningPokerRestController {
 						.DELETE("/{id}", request -> ServerResponse.noContent().build())
 						.POST("/{id}/member", this::joinMember)
 						.GET("/{id}/member", this::allMemberFromTheRoom)
+						.PUT("/{id}/member/{memberId}", this::updateMember)
 				)
 				.build();
+	}
+
+	private Mono<ServerResponse> updateMember(ServerRequest request) {
+		var roomId = UUID.fromString(request.pathVariable("id"));
+		var memberId = request.pathVariable("memberId");
+		return null;
 	}
 
 	private Mono<ServerResponse> roomById(ServerRequest request) {
@@ -134,7 +168,7 @@ class PlanningPokerRestController {
 	private Mono<ServerResponse> allMemberFromTheRoom(ServerRequest request) {
 		var roomId = UUID.fromString(request.pathVariable("id"));
 		return memberRepository
-				.allMember(roomId)
+				.allMemberFromRoom(roomId)
 				.collectList()
 				.flatMap(members -> ServerResponse.ok().bodyValue(members));
 	}
@@ -143,13 +177,8 @@ class PlanningPokerRestController {
 		var roomId = UUID.fromString(request.pathVariable("id"));
 		return request
 				.bodyToMono(Member.class)
-				.flatMap(member -> memberRepository.addMemberToRoom(roomId, member))
-				.map(member -> {
-					roomRepository
-							.roomSink(roomId)
-							.tryEmitNext(member.toString());
-					return member;
-				})
+				.flatMap(member -> memberRepository.addMemberToTheRoom(roomId, member))
+				.doOnNext(member -> roomRepository.notifyMemberDetailsToTheRoom(roomId).subscribe())
 				.flatMap(member -> ServerResponse.ok().bodyValue(member));
 	}
 
@@ -174,11 +203,6 @@ class PlanningPokerRestController {
 @RequiredArgsConstructor
 class WebSocketConfiguration {
 	final RoomWebSocketHandler roomWebSocketHandler;
-
-	/*@Bean
-	public Sinks.Many<String> broadcastSink() {
-		return Sinks.many().multicast().onBackpressureBuffer();
-	}*/
 
 	@Bean
 	public HandlerMapping webSocketMapping() {
@@ -207,8 +231,13 @@ class RoomWebSocketHandler implements WebSocketHandler {
 	public Mono<Void> handle(WebSocketSession session) {
 		var roomId = session.getHandshakeInfo().getUri().getPath().split("/")[2];
 		log.info("RoomId: {}", roomId);
-		var uuidRoomId = UUID.fromString(roomId);
-		var sink = roomRepository.roomSink(uuidRoomId);
+		var roomIdUUID = UUID.fromString(roomId);
+		var sink = roomRepository.roomSink(roomIdUUID);
+
+		if(isNull(sink)) {
+			throw new RuntimeException("User is not connected");
+		}
+
 		return session.send(sink.asFlux().map(session::textMessage))
 				.and(session.receive()
 						.doOnNext(message -> {
