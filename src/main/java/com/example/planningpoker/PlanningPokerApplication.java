@@ -2,12 +2,10 @@ package com.example.planningpoker;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.context.annotation.Bean;
-import reactor.core.publisher.Sinks;
-
-import java.util.Map;
-import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 
 @SpringBootApplication
 public class PlanningPokerApplication {
@@ -16,9 +14,18 @@ public class PlanningPokerApplication {
 		SpringApplication.run(PlanningPokerApplication.class, args);
 	}
 
-	@Bean
-	Map<UUID, Sinks.Many<String>> roomSinks() {
-		return new ConcurrentHashMap<>();
+}
+
+@Controller
+class PlanningPokerController {
+	@GetMapping("/{roomId}")
+	public String joiningForm(@PathVariable String roomId) {
+		return "joining-form";
+	}
+
+	@PostMapping("/{roomId}/join")
+	public String join() {
+		return "room";
 	}
 }
 

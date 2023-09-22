@@ -6,21 +6,33 @@
           content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <title>Home</title>
+    <style>
+        body {
+            margin-left: auto;
+            margin-right: auto;
+            width: 50%;
+        }
+    </style>
 </head>
 <body>
-    <div>Websocket Client: </div>
-    <hr />
-    <p id="message"></p>
+    <input type="text" id="new__room_cards" value="1,2,3,5,8" />
+    <br/>
+    <button id="new__room" onclick="newRoom()">Create Room</button>
+    <p id="room__information"></p>
     <script>
-        const ws = new WebSocket("ws://localhost:8080/ws/room/1");
-        ws.onopen = (event) => {
-            console.log(event);
-            ws.send('Browser Client connected');
-        };
-
-        ws.onmessage = (event) => {
-            document.getElementById("message").innerHTML += `<span>${event.data}</span><br/>`
+        newRoom = () => {
+            const cards = document.getElementById("new__room_cards").value;
+            fetch("/room", {
+                method: "POST",
+                headers: { "Content-Type": "application/json"},
+                body: JSON.stringify({
+                    "cards": cards.split(',')
+                })
+            })
+                .then(r => r.json())
+                .then(r => document.getElementById("room__information").innerHTML = `<a href="">${location.protocol}://${location.host}/${r.id}</a>`)
         }
+
     </script>
 </body>
 </html>

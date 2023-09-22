@@ -1,5 +1,6 @@
 package com.example.planningpoker.ws;
 
+import com.example.planningpoker.repositories.RoomRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -8,21 +9,22 @@ import org.springframework.web.reactive.socket.WebSocketSession;
 import reactor.core.publisher.Mono;
 import reactor.core.publisher.Sinks;
 
+import java.util.Objects;
+import java.util.UUID;
+
 @Component
 @RequiredArgsConstructor
 @Slf4j
 public class RoomWebSocketHandler implements WebSocketHandler {
-    final Sinks.Many<String> sink = Sinks.many().replay().latestOrDefault("Welcome!");
-
+    final RoomRepository roomRepository;
     @Override
     public Mono<Void> handle(WebSocketSession session) {
-        var userId = session.getId();
         var roomId = session.getHandshakeInfo().getUri().getPath().split("/")[3];
-        log.info("RoomId : {}", roomId);
-        log.info("UserId : {} ", userId);
-        session.getAttributes().put("userId", userId);
         session.getAttributes().put("roomId", roomId);
+
         //map this id to a user
+        var sink = roomRepository.getRoomSinks().get(UUID.fromString(roomId));
+        Objects.requireNonNull(sink);
 
         return session
                 .send(sink.asFlux().map(session::textMessage))
