@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import reactor.core.publisher.Mono;
 
+import java.util.Objects;
 import java.util.UUID;
 
 @SpringBootApplication
@@ -26,7 +27,7 @@ public class PlanningPokerApplication {
 class PlanningPokerController {
 	final RoomRepository roomRepository;
 
-	@GetMapping("/{roomId}")
+	@GetMapping("/server/{roomId}")
 	public Mono<String> joiningForm(@PathVariable String roomId) {
 		return roomRepository
 				.roomById(UUID.fromString(roomId))

@@ -20,7 +20,9 @@ public class RoomWebSocketHandler implements WebSocketHandler {
     @Override
     public Mono<Void> handle(WebSocketSession session) {
         var roomId = session.getHandshakeInfo().getUri().getPath().split("/")[3];
+        log.info("RoomId {}", roomId);
         session.getAttributes().put("roomId", roomId);
+        session.getAttributes().put("userId", session.getId());
 
         //map this id to a user
         var sink = roomRepository.getRoomSinks().get(UUID.fromString(roomId));

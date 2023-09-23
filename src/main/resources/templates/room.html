@@ -27,22 +27,46 @@
               <option>Participant</option>
               <option>Observer</option>
           </select>
-          <button type="submit" onclick="joinRoom()">Join</button>
+          <button id="join__button" type="submit" onclick="joinRoom()">Join</button>
       </div>
       <hr>
       <div id="room__info"></div>
       <script>
+          const roomId = location.pathname.split("/")[2]
+          console.log(roomId)
+
           const joinRoom = () => {
               const name = document.querySelector("input").value
               const role = document.querySelector("select").value
-
               if(name) {
-                  console.log({name, role});
-                  sessionStorage.setItem("user", JSON.stringify({name, role}));
+                  const user = {name, role}
+                  fetch(`/room/${roomId}/member`,{
+                      method: 'POST',
+                      headers: {
+                          'Content-Type': 'application/json'
+                      },
+                      body: JSON.stringify(user)
+                  })
+                      .then(r => r.json())
+                      .then(r => {
+                          console.log(r)
+                          //sessionStorage.setItem("user", JSON.stringify({name, role}));
+                          const ws = new WebSocket(`ws://localhost:8080/ws/room/${roomId}`)
+                          ws.onopen = (e) => {
+                              ws.send(JSON.stringify(user));
+                          }
+                          ws.onmessage = (e) => {
+                              document.getElementById("room__info").innerHTML += `<p>${e.data}</p>`
+                          }
+                          ws.onclose = (e) => {
+                              document.getElementById("room__info").innerHTML += `<p>Connection lost</p>`
+                          }
+                      })
               } else {
-                  document.getElementById("room__info").innerHTML = "<p id='error'>name should not be empty please</p>"
+                  document.querySelector("input").style.backgroundColor = "yellow";
               }
           }
+
       </script>
     </body>
 </html>

@@ -12,15 +12,19 @@
             margin-right: auto;
             width: 50%;
         }
+        input#room__details{
+            width: 440px;
+        }
     </style>
 </head>
 <body>
+    <h3>Create New Room</h3>
     <input type="text" id="new__room_cards" value="1,2,3,5,8" />
     <br/>
     <button id="new__room" onclick="newRoom()">Create Room</button>
     <p id="room__information"></p>
     <script>
-        newRoom = () => {
+        const newRoom = () => {
             const cards = document.getElementById("new__room_cards").value;
             fetch("/room", {
                 method: "POST",
@@ -30,7 +34,18 @@
                 })
             })
                 .then(r => r.json())
-                .then(r => document.getElementById("room__information").innerHTML = `<a href="">${location.protocol}://${location.host}/${r.id}</a>`)
+                .then(r => document.getElementById("room__information").innerHTML = `<input id="room__details" type="text" value="${location.protocol}://${location.host}/server/${r.id}" /><button onclick="copyText()">Copy text</button>`)
+        }
+
+        const copyText = () => {
+            // Get the text field
+            const copyText = document.getElementById("room__details");
+            // Select the text field
+            copyText.select();
+            copyText.setSelectionRange(0, 99999); // For mobile devices
+
+            // Copy the text inside the text field
+            navigator.clipboard.writeText(copyText.value);
         }
 
     </script>
