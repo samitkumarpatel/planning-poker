@@ -1,20 +1,48 @@
 <!doctype html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport"
-          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
-    <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <title>Room</title>
-    <style>
-      body {
-        margin-left: auto;
-        margin-right: auto;
-        width: 50%;
-      }
-    </style>
-</head>
-<body>
-  <h3> Welcome to the room</h3>
-</body>
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport"
+              content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+        <meta http-equiv="X-UA-Compatible" content="ie=edge">
+        <title>Room</title>
+        <style>
+          body {
+            margin-left: auto;
+            margin-right: auto;
+            width: 50%;
+          }
+          #error {
+              color: red;
+          }
+
+        </style>
+    </head>
+    <body>
+      <div id="room__form">
+          <h3>Identify yourself in this room</h3>
+          <input type="text" name="name" placeholder="Participant Name"/>
+          <br/>
+          <select name="role">
+              <option>Participant</option>
+              <option>Observer</option>
+          </select>
+          <button type="submit" onclick="joinRoom()">Join</button>
+      </div>
+      <hr>
+      <div id="room__info"></div>
+      <script>
+          const joinRoom = () => {
+              const name = document.querySelector("input").value
+              const role = document.querySelector("select").value
+
+              if(name) {
+                  console.log({name, role});
+                  sessionStorage.setItem("user", JSON.stringify({name, role}));
+              } else {
+                  document.getElementById("room__info").innerHTML = "<p id='error'>name should not be empty please</p>"
+              }
+          }
+      </script>
+    </body>
 </html>
