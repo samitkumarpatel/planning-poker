@@ -34,7 +34,7 @@
                 })
             })
                 .then(r => r.json())
-                .then(r => document.getElementById("room__information").innerHTML = `<input id="room__details" type="text" value="${location.protocol}://${location.host}/server/${r.id}" /><button onclick="copyText()">Copy text</button>`)
+                .then(r => document.getElementById("room__information").innerHTML = `<input disabled id="room__details" type="text" value="${location.protocol}://${location.host}/server/${r.id}" /><button onclick="copyText()">Copy text</button>`)
         }
 
         const copyText = () => {

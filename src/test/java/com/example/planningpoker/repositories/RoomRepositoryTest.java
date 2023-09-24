@@ -36,9 +36,9 @@ class RoomRepositoryTest {
                 .verifyComplete();
         var roomId = roomRepository.findAll().map(r -> r.id()).blockFirst();
 
-        var member1 = new Member("1",true,"User One",null,false);
-        var member1ToBeUpdated = new Member(member1.id(), true, member1.name(), "3", true);
-        var member2 = new Member("2",true,"User Two",null,false);
+        var member1 = new Member("1", "Participant", true,"User One",null,false);
+        var member1ToBeUpdated = new Member(member1.id(),"Participant", true, member1.name(), "3", true);
+        var member2 = new Member("2" , "Participant",true,"User Two",null,false);
 
         assertAll(
                 "CRUD OPERATION",

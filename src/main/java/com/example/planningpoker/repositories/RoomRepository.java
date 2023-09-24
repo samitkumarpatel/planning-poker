@@ -17,7 +17,6 @@ import static java.util.Objects.nonNull;
 public class RoomRepository {
     private final static List<Room> db = new ArrayList<>();
     private final static Map<UUID, Sinks.Many<String>> roomSinks = new ConcurrentHashMap<>();
-
     public Map<UUID, Sinks.Many<String>> getRoomSinks() {
         return roomSinks;
     }
@@ -34,13 +33,11 @@ public class RoomRepository {
 
     public Mono<Room> roomById(UUID id) {
         return Mono
-                .fromCallable(() -> {
-                    return db
+                .fromCallable(() -> db
                             .stream()
                             .filter(room -> Objects.equals(room.id(), id))
                             .findFirst()
-                            .orElseThrow();
-                });
+                            .orElseThrow());
     }
 
     public Flux<Room> findAll() {
@@ -68,7 +65,14 @@ public class RoomRepository {
                             .stream()
                             .map(m -> {
                                 if(m.id().equals(memberId)) {
-                                    return new Member(memberId, member.status(), m.name(), member.vote(), member.voted());
+                                    return new Member(
+                                            member.id(),
+                                            nonNull(member.role()) ? member.role() : m.role(),
+                                            member.status(),
+                                            m.name(),
+                                            nonNull(member.vote()) ? member.vote() : m.vote(),
+                                            member.voted()
+                                    );
                                 } else {
                                     return m;
                                 }

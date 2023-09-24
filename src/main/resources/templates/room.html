@@ -38,14 +38,15 @@
           const joinRoom = () => {
               const name = document.querySelector("input").value
               const role = document.querySelector("select").value
+              const id = name ? name.toLowerCase().replace(/\s/g, "") : Date.now()
               if(name) {
-                  const user = {name, role}
+                  const user = {id, name, role}
                   fetch(`/room/${roomId}/member`,{
                       method: 'POST',
                       headers: {
                           'Content-Type': 'application/json'
                       },
-                      body: JSON.stringify(user)
+                      body: JSON.stringify({...user, status: true})
                   })
                       .then(r => r.json())
                       .then(r => {
