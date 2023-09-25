@@ -26,7 +26,6 @@ public class PlanningPokerService {
                 .doOnNext(room -> log.info("Members : {}", room.members()))
                 .mapNotNull(room -> membersAsString(room.members()))
                 .map(eventPayload -> roomRepository.getRoomSinks().get(roomId).tryEmitNext(eventPayload).isSuccess())
-                .doOnNext(sinkResult -> log.info("SINK Result {}", sinkResult))
                 .then();
     }
 

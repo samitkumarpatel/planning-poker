@@ -3,6 +3,7 @@ package com.example.planningpoker.routers;
 import com.example.planningpoker.models.Member;
 import com.example.planningpoker.models.Room;
 import com.example.planningpoker.repositories.RoomRepository;
+import com.fasterxml.jackson.databind.ser.std.UUIDSerializer;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -25,10 +26,19 @@ public class PlanningPokerRouter {
                 .path("/room", builder -> builder
                         .POST("", this::createRoom)
                         .GET("", this::allRoom)
+                        .GET("/{id}/cards", this::cardByRoomId)
                         .POST("/{id}/member", this::addMemberToARoom)
                         .PUT("/{id}/member/{memberId}", this::updateARoomMember)
                 )
                 .build();
+    }
+
+    private Mono<ServerResponse> cardByRoomId(ServerRequest request) {
+        var roomId = UUID.fromString(request.pathVariable("id"));
+        return roomRepository
+                .roomById(roomId)
+                .map(Room::cards)
+                .flatMap(ServerResponse.ok()::bodyValue);
     }
 
     private Mono<ServerResponse> updateARoomMember(ServerRequest request) {

@@ -22,19 +22,19 @@
     <input type="text" id="new__room_cards" value="1,2,3,5,8" />
     <br/>
     <button id="new__room" onclick="newRoom()">Create Room</button>
-    <p id="room__information"></p>
+    <div id="room__information"></div>
     <script>
         const newRoom = () => {
             const cards = document.getElementById("new__room_cards").value;
             fetch("/room", {
                 method: "POST",
-                headers: { "Content-Type": "application/json"},
+                headers: {"Content-Type": "application/json"},
                 body: JSON.stringify({
                     "cards": cards.split(',')
                 })
             })
                 .then(r => r.json())
-                .then(r => document.getElementById("room__information").innerHTML = `<input disabled id="room__details" type="text" value="${location.protocol}://${location.host}/server/${r.id}" /><button onclick="copyText()">Copy text</button>`)
+                .then(r => document.getElementById("room__information").innerHTML = `<hr><input disabled id="room__details" type="text" value="${location.protocol}://${location.host}/server/${r.id}" /><button onclick="copyText()">Copy text</button>`)
         }
 
         const copyText = () => {

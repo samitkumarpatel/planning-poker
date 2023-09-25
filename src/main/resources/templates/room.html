@@ -15,6 +15,11 @@
           #error {
               color: red;
           }
+          button.card {
+              margin-right: 50px;
+              width: 60px;
+              height: 40px;
+          }
 
         </style>
     </head>
@@ -24,17 +29,29 @@
           <input type="text" name="name" placeholder="Participant Name"/>
           <br/>
           <select name="role">
-              <option>Participant</option>
-              <option>Observer</option>
+              <option value="PARTICIPANT">Participant</option>
+              <option value="OBSERVER">Observer</option>
           </select>
           <button id="join__button" type="submit" onclick="joinRoom()">Join</button>
       </div>
-      <hr>
+
+      <div id="room__cards"></div>
+
       <div id="room__info"></div>
       <script>
           const roomId = location.pathname.split("/")[2]
           console.log(roomId)
-
+          let ws;
+          const fetchCards = () => {
+              fetch(`/room/${roomId}/cards`, {
+                  method: 'GET',
+                  headers: { 'Content-Type': 'application/json' }
+              })
+                  .then(res => res.json())
+                  .then(res => {
+                      document.getElementById("room__cards").innerHTML = `<hr>` + res.map(n => `<button onclick="voting(${n})" class="card">${n}</button>`)
+                  })
+          };
           const joinRoom = () => {
               const name = document.querySelector("input").value
               const role = document.querySelector("select").value
@@ -43,21 +60,21 @@
                   const user = {id, name, role}
                   fetch(`/room/${roomId}/member`,{
                       method: 'POST',
-                      headers: {
-                          'Content-Type': 'application/json'
-                      },
+                      headers: {'Content-Type': 'application/json'},
                       body: JSON.stringify({...user, status: true})
                   })
                       .then(r => r.json())
                       .then(r => {
-                          console.log(r)
+                          fetchCards();
+
                           //sessionStorage.setItem("user", JSON.stringify({name, role}));
-                          const ws = new WebSocket(`ws://localhost:8080/ws/room/${roomId}`)
+                          ws = new WebSocket(`ws://localhost:8080/ws/room/${roomId}`)
                           ws.onopen = (e) => {
-                              ws.send(JSON.stringify(user));
+                              ws.send(JSON.stringify({...user, event: 'JOIN'}));
                           }
                           ws.onmessage = (e) => {
-                              document.getElementById("room__info").innerHTML += `<p>${e.data}</p>`
+                              const members = JSON.parse(e.data);
+                              document.getElementById("room__info").innerHTML = `<hr>`+ members.map(d => `<p>${JSON.stringify(d)}</p>`)
                           }
                           ws.onclose = (e) => {
                               document.getElementById("room__info").innerHTML += `<p>Connection lost</p>`
@@ -66,6 +83,11 @@
               } else {
                   document.querySelector("input").style.backgroundColor = "yellow";
               }
+          }
+
+          const voting = (v) => {
+              console.log(v)
+              ws.send(JSON.stringify({event:'VOTE',vote: v}));
           }
 
       </script>
