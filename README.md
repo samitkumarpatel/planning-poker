@@ -32,3 +32,4 @@ Access the application by accessing [http://localhost:8080](http://localhost:808
 - As a `Participant` they can vote.
 - As a `Observer` you can revel the vote , so that other cab see the vote details on their screen.
 - As a `Observer` you can do more then a `Participant`.
+- More to come ...
