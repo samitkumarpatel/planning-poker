@@ -28,7 +28,7 @@ public class RoomRepository {
                     db.add(newRoom);
                     return newRoom;
                 })
-                .doOnNext(room1 -> roomSinks.put(room1.id(), Sinks.many().replay().latestOrDefault("Welcome!")));
+                .doOnNext(room1 -> roomSinks.put(room1.id(), Sinks.many().replay().latest()));
     }
 
     public Mono<Room> roomById(UUID id) {

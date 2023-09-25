@@ -41,13 +41,25 @@ public class RoomWebSocketHandler implements WebSocketHandler {
                 .and(session
                         .receive()
                         .doOnNext(message -> {
-                            log.info("RoomId {} , UserId {} sent an message", session.getAttributes().get("roomId"), session.getAttributes().get("userId"));
+                            log.info("RoomId {} , UserId {} sent an message {}", session.getAttributes().get("roomId"), session.getAttributes().get("userId"), message.getPayloadAsText());
                             //onopen event
                             try {
                                 var map = objectMapper.readValue(message.getPayloadAsText(), Map.class);
-                                roomRepository
-                                        .updateMemberByRoomIdAndMemberId(roomUUID, (String)map.get("id"),new Member(session.getId(), (String)map.get("role"), true, "", null, false))
-                                        .subscribe();
+                                switch ((String)map.get("event")) {
+                                    case "JOIN" :
+                                        roomRepository
+                                                .updateMemberByRoomIdAndMemberId(roomUUID, (String)map.get("id"),new Member(session.getId(), (String)map.get("role"), true, "", null, false))
+                                                .subscribe();
+                                        break;
+                                    case "VOTE" :
+                                        roomRepository
+                                                .updateMemberByRoomIdAndMemberId(roomUUID, session.getId(), new Member(session.getId(), null, true, null, String.valueOf(map.get("vote")), true))
+                                                .subscribe();
+                                        break;
+                                    default:
+                                        log.info("UNKNOWN event- Ignored");
+                                        break;
+                                }
                             } catch (Exception e) {
                                 log.error("{}", e.getMessage());
                             }
