@@ -47,14 +47,24 @@ public class RoomWebSocketHandler implements WebSocketHandler {
                                 var map = objectMapper.readValue(message.getPayloadAsText(), Map.class);
                                 switch ((String)map.get("event")) {
                                     case "JOIN" :
+                                        //just update the customId to session
                                         roomRepository
-                                                .updateMemberByRoomIdAndMemberId(roomUUID, (String)map.get("id"),new Member(session.getId(), (String)map.get("role"), true, "", null, false))
-                                                .subscribe();
+                                                .updateMemberByRoomIdAndMemberId(
+                                                        roomUUID,
+                                                        (String)map.get("id"),
+                                                        new Member(session.getId(), (String)map.get("role"), true, "", null, false)
+                                                ).subscribe();
                                         break;
                                     case "VOTE" :
+                                        //maintain vote in seperate map and mapped it when OBSERVER revel the score
                                         roomRepository
-                                                .updateMemberByRoomIdAndMemberId(roomUUID, session.getId(), new Member(session.getId(), null, true, null, String.valueOf(map.get("vote")), true))
-                                                .subscribe();
+                                                .memberVotes.put(session.getId(), String.valueOf(map.get("vote")));
+                                        roomRepository
+                                                .updateMemberByRoomIdAndMemberId(
+                                                        roomUUID,
+                                                        session.getId(),
+                                                        new Member(session.getId(), null, true, null, "HIDDEN", true)
+                                                ).subscribe();
                                         break;
                                     default:
                                         log.info("UNKNOWN event- Ignored");
@@ -73,8 +83,11 @@ public class RoomWebSocketHandler implements WebSocketHandler {
                             log.info("userId {} disconnected from RoomId {}", session.getAttributes().get("userId"), session.getAttributes().get("roomId"));
 
                             roomRepository
-                                    .updateMemberByRoomIdAndMemberId(roomUUID, session.getId(),new Member(session.getId(), null, false, "", null, false))
-                                    .subscribe();
+                                    .updateMemberByRoomIdAndMemberId(
+                                            roomUUID,
+                                            session.getId(),
+                                            new Member(session.getId(), null, false, "", null, false)
+                                    ).subscribe();
                             service.raiseWsEvent(roomUUID).subscribe();
                         }).then());
     }

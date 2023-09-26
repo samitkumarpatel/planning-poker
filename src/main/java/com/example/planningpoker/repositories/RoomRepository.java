@@ -20,6 +20,7 @@ public class RoomRepository {
     public Map<UUID, Sinks.Many<String>> getRoomSinks() {
         return roomSinks;
     }
+    public Map<String, String> memberVotes = new ConcurrentHashMap<>();
 
     public Mono<Room> create(Room room) {
         return Mono

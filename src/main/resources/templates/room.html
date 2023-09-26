@@ -20,7 +20,11 @@
               width: 60px;
               height: 40px;
           }
-
+          div#room__admin button {
+              margin-right: 50px;
+              width: 60px;
+              height: 40px;
+          }
         </style>
     </head>
     <body>
@@ -34,9 +38,8 @@
           </select>
           <button id="join__button" type="submit" onclick="joinRoom()">Join</button>
       </div>
-
       <div id="room__cards"></div>
-
+      <div id="room__admin"></div>
       <div id="room__info"></div>
       <script>
           const roomId = location.pathname.split("/")[2]
@@ -67,7 +70,7 @@
                       .then(r => {
                           fetchCards();
 
-                          //sessionStorage.setItem("user", JSON.stringify({name, role}));
+                          sessionStorage.setItem("plan-poker-user", JSON.stringify({name, role}));
                           ws = new WebSocket(`ws://localhost:8080/ws/room/${roomId}`)
                           ws.onopen = (e) => {
                               ws.send(JSON.stringify({...user, event: 'JOIN'}));
@@ -80,6 +83,18 @@
                               document.getElementById("room__info").innerHTML += `<p>Connection lost</p>`
                           }
                       })
+                      .finally(r => {
+                          //disabled form after it's submissions
+                          const childNodes = document.getElementById("room__form").getElementsByTagName('*');
+                          for (let node of childNodes) {
+                              node.disabled = true;
+                          }
+                          //show admin related button to OBSERVER
+                          const user = sessionStorage.getItem("plan-poker-user");
+                          if(user && JSON.parse(user)['role'] === "OBSERVER") {
+                              document.getElementById("room__admin").innerHTML = `<hr><button type="button" onclick="showVote()">Show Vote</button> <button type="button" onclick="clearVote()">Clear Vote</button>`
+                          }
+                      })
               } else {
                   document.querySelector("input").style.backgroundColor = "yellow";
               }
@@ -90,6 +105,13 @@
               ws.send(JSON.stringify({event:'VOTE',vote: v}));
           }
 
+          const showVote = () => {
+              console.log("showVote")
+          }
+
+          const clearVote = () => {
+              console.log("clearVote")
+          }
       </script>
     </body>
 </html>

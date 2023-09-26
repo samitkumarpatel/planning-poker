@@ -34,7 +34,11 @@
                 })
             })
                 .then(r => r.json())
-                .then(r => document.getElementById("room__information").innerHTML = `<hr><input disabled id="room__details" type="text" value="${location.protocol}://${location.host}/server/${r.id}" /><button onclick="copyText()">Copy text</button>`)
+                .then(r => {
+                    document.getElementById("room__information").innerHTML = `<hr><input disabled id="room__details" type="text" value="${location.protocol}://${location.host}/server/${r.id}" /><button onclick="copyText()">Copy text</button>`
+                    document.getElementById("new__room").disabled = true;
+                    document.getElementById("new__room_cards").disabled = true;
+                })
         }
 
         const copyText = () => {
