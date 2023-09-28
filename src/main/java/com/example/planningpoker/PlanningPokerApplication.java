@@ -11,7 +11,10 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import reactor.core.publisher.Mono;
 
+import java.util.Objects;
 import java.util.UUID;
+
+import static java.util.Objects.nonNull;
 
 @SpringBootApplication
 public class PlanningPokerApplication {
@@ -31,7 +34,13 @@ class PlanningPokerController {
 	public Mono<String> joiningForm(@PathVariable String roomId) {
 		return roomRepository
 				.roomById(UUID.fromString(roomId))
-				.map(room -> "room");
+				.<String>handle((room,sink) -> {
+					if(nonNull(room.id())) {
+						sink.next("room");
+					} else {
+						sink.next("error");
+					}
+				});
 	}
 }
 

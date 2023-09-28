@@ -23,13 +23,22 @@ public class RoomRepository {
     public Map<String, String> memberVotes = new ConcurrentHashMap<>();
 
     public Mono<Room> create(Room room) {
-        return Mono
-                .fromCallable(() -> {
-                    var newRoom = new Room(UUID.randomUUID(),room.cards(),new ArrayList<>());
-                    db.add(newRoom);
-                    return newRoom;
-                })
-                .doOnNext(room1 -> roomSinks.put(room1.id(), Sinks.many().replay().latest()));
+        if(nonNull(room.id())) {
+            System.out.println("Room for update %s".formatted(room));
+            roomById(room.id())
+                    .map(room1 -> db.remove(room1))
+                    .map(aBoolean -> db.add(room)).subscribe();
+            return Mono.fromCallable(() -> room);
+        } else {
+            return Mono
+                    .fromCallable(() -> {
+                        var newRoom = new Room(UUID.randomUUID(),room.cards(),new ArrayList<>());
+                        db.add(newRoom);
+                        return newRoom;
+                    })
+                    .doOnNext(room1 -> roomSinks.put(room1.id(), Sinks.many().replay().latest()));
+        }
+
     }
 
     public Mono<Room> roomById(UUID id) {
@@ -38,7 +47,7 @@ public class RoomRepository {
                             .stream()
                             .filter(room -> Objects.equals(room.id(), id))
                             .findFirst()
-                            .orElseThrow());
+                            .orElseThrow(() -> new RuntimeException("Room not found")));
     }
 
     public Flux<Room> findAll() {

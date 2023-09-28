@@ -101,16 +101,14 @@
           }
 
           const voting = (v) => {
-              console.log(v)
               ws.send(JSON.stringify({event:'VOTE',vote: v}));
           }
 
           const showVote = () => {
-              console.log("showVote")
+              ws.send(JSON.stringify({event:'RESULT'}));
           }
-
           const clearVote = () => {
-              console.log("clearVote")
+              ws.send(JSON.stringify({event:'RESET'}));
           }
       </script>
     </body>
