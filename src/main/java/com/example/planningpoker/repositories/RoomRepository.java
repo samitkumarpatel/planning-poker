@@ -47,7 +47,8 @@ public class RoomRepository {
                             .stream()
                             .filter(room -> Objects.equals(room.id(), id))
                             .findFirst()
-                            .orElseThrow(() -> new RuntimeException("Room not found")));
+                            .orElseThrow(() -> new RuntimeException("Room not found")))
+                .onErrorResume(e -> Mono.error(e));
     }
 
     public Flux<Room> findAll() {
