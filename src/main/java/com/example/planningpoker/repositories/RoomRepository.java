@@ -26,7 +26,7 @@ public class RoomRepository {
         if(nonNull(room.id())) {
             System.out.println("Room for update %s".formatted(room));
             roomById(room.id())
-                    .map(room1 -> db.remove(room1))
+                    .map(db::remove)
                     .map(aBoolean -> db.add(room)).subscribe();
             return Mono.fromCallable(() -> room);
         } else {

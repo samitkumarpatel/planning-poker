@@ -3,7 +3,6 @@ package com.example.planningpoker.routers;
 import com.example.planningpoker.models.Member;
 import com.example.planningpoker.models.Room;
 import com.example.planningpoker.repositories.RoomRepository;
-import com.fasterxml.jackson.databind.ser.std.UUIDSerializer;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

@@ -1,21 +1,16 @@
 package com.example.planningpoker;
 
 import com.example.planningpoker.repositories.RoomRepository;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.context.annotation.Bean;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import reactor.core.publisher.Mono;
 
-import java.util.Objects;
 import java.util.UUID;
-
-import static java.util.Objects.nonNull;
 
 @SpringBootApplication
 public class PlanningPokerApplication {
@@ -36,7 +31,7 @@ class PlanningPokerController {
 	public Mono<String> joiningForm(@PathVariable String roomId) {
 		return Mono
 				.fromCallable(() -> UUID.fromString(roomId))
-				.map(roomId1 -> roomRepository.roomById(roomId1))
+				.map(roomRepository::roomById)
 				.doOnSuccess(room -> log.info("SUCCESS"))
 				.map(room -> "room")
 				.doOnError(e -> log.error("ERROR {}", e.getMessage()))

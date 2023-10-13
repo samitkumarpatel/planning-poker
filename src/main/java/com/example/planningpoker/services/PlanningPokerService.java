@@ -1,11 +1,9 @@
 package com.example.planningpoker.services;
 
 import com.example.planningpoker.models.Member;
-import com.example.planningpoker.models.Room;
 import com.example.planningpoker.repositories.RoomRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
-import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
