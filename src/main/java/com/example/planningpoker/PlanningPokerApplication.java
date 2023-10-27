@@ -29,13 +29,15 @@ class PlanningPokerController {
 
 	@GetMapping("/server/{roomId}")
 	public Mono<String> joiningForm(@PathVariable String roomId) {
-		return Mono
-				.fromCallable(() -> UUID.fromString(roomId))
-				.map(roomRepository::roomById)
-				.doOnSuccess(room -> log.info("SUCCESS"))
-				.map(room -> "room")
-				.doOnError(e -> log.error("ERROR {}", e.getMessage()))
+//		return roomRepository
+//				.roomById(UUID.fromString(roomId))
+//				.map(room -> "room")
+//				.onErrorReturn("error");
+
+		return Mono.fromCallable(() -> UUID.fromString(roomId))
+				.flatMap(uuid -> roomRepository.roomById(uuid).map(room -> "room"))
 				.onErrorReturn("error");
 	}
+
 }
 

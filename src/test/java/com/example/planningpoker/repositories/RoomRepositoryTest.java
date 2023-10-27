@@ -9,6 +9,7 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 import reactor.test.StepVerifier;
 
 import java.util.List;
+import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -59,6 +60,10 @@ class RoomRepositoryTest {
                                 assertEquals(0, r.members().size());
                             })
                             .verifyComplete();
+
+                    StepVerifier
+                            .create(roomRepository.roomById(UUID.fromString("a6a24419-4b2d-42db-bf02-f36da1ce877b")))
+                            .verifyErrorMessage("Room not found");
                 },
                 () -> {
                     //addMemberToRoom()

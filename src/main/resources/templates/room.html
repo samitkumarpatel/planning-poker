@@ -7,109 +7,217 @@
         <meta http-equiv="X-UA-Compatible" content="ie=edge">
         <title>Room</title>
         <style>
-          body {
-            margin-left: auto;
-            margin-right: auto;
-            width: 50%;
-          }
-          #error {
-              color: red;
-          }
-          button.card {
-              margin-right: 50px;
-              width: 60px;
-              height: 40px;
-          }
-          div#room__admin button {
-              margin-right: 50px;
-              width: 60px;
-              height: 40px;
-          }
+            body {
+                margin-right: auto;
+                margin-left: auto;
+                width: 70%;
+            }
+            .container {
+                display: flex;
+                flex-direction: column;
+            }
+            div {
+                margin-top: 5px;
+            }
+
+            button.card {
+                margin-right: 10px;
+                height: 50px;
+                width: 50px;
+            }
+
+            div.admin button {
+                margin-right: 10px;
+                height: 50px;
+                width: 30%;
+            }
+
+            form input,select,button {
+                margin-top: 5px;
+                height: 50px;
+            }
+
+            button#join__button {
+                margin-left: 5px;
+            }
+
+            footer {
+                text-align: center;
+                color: gray;
+                margin-top: 60px;
+            }
+
+            table tbody tr td {
+                border-top: 1px solid gray;
+                border-bottom: 1px solid gray;
+            }
+
+            tr,td {
+                width: 80px;
+                height: 50px;
+            }
+            td {
+                border-right: 1px solid gray;
+                text-align: center;
+            }
         </style>
     </head>
     <body>
-      <div id="room__form">
-          <h3>Identify yourself in this room</h3>
-          <input type="text" name="name" placeholder="Participant Name"/>
-          <br/>
-          <select name="role">
-              <option value="PARTICIPANT">Participant</option>
-              <option value="OBSERVER">Observer</option>
-          </select>
-          <button id="join__button" type="submit" onclick="joinRoom()">Join</button>
-      </div>
-      <div id="room__cards"></div>
-      <div id="room__admin"></div>
-      <div id="room__info"></div>
-      <script>
-          const roomId = location.pathname.split("/")[2]
-          console.log(roomId)
-          let ws;
-          const fetchCards = () => {
-              fetch(`/room/${roomId}/cards`, {
-                  method: 'GET',
-                  headers: { 'Content-Type': 'application/json' }
-              })
-                  .then(res => res.json())
-                  .then(res => {
-                      document.getElementById("room__cards").innerHTML = `<hr>` + res.map(n => `<button onclick="voting(${n})" class="card">${n}</button>`)
-                  })
-          };
-          const joinRoom = () => {
-              const name = document.querySelector("input").value
-              const role = document.querySelector("select").value
-              const id = name ? name.toLowerCase().replace(/\s/g, "") : Date.now()
-              if(name) {
-                  const user = {id, name, role}
-                  fetch(`/room/${roomId}/member`,{
-                      method: 'POST',
-                      headers: {'Content-Type': 'application/json'},
-                      body: JSON.stringify({...user, status: true})
-                  })
-                      .then(r => r.json())
-                      .then(r => {
-                          fetchCards();
+        <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+        <div class="container" id="app">
 
-                          sessionStorage.setItem("plan-poker-user", JSON.stringify({name, role}));
-                          ws = new WebSocket(`ws://localhost:8080/ws/room/${roomId}`)
-                          ws.onopen = (e) => {
-                              ws.send(JSON.stringify({...user, event: 'JOIN'}));
-                          }
-                          ws.onmessage = (e) => {
-                              const members = JSON.parse(e.data);
-                              document.getElementById("room__info").innerHTML = `<hr>`+ members.map(d => `<p>${JSON.stringify(d)}</p>`)
-                          }
-                          ws.onclose = (e) => {
-                              document.getElementById("room__info").innerHTML += `<p>Connection lost</p>`
-                          }
-                      })
-                      .finally(r => {
-                          //disabled form after it's submissions
-                          const childNodes = document.getElementById("room__form").getElementsByTagName('*');
-                          for (let node of childNodes) {
-                              node.disabled = true;
-                          }
-                          //show admin related button to OBSERVER
-                          const user = sessionStorage.getItem("plan-poker-user");
-                          if(user && JSON.parse(user)['role'] === "OBSERVER") {
-                              document.getElementById("room__admin").innerHTML = `<hr><button type="button" onclick="showVote()">Show Vote</button> <button type="button" onclick="clearVote()">Clear Vote</button>`
-                          }
-                      })
-              } else {
-                  document.querySelector("input").style.backgroundColor = "yellow";
-              }
-          }
+            <div id="room__form" v-if="!hasJoin">
+                <h3>Identify yourself in this room</h3>
+                <form @submit.prevent="joinRoom">
+                    <input type="text" v-model="name" placeholder="Participant Name"/>
+                    <br/>
+                    <select v-model="selected">
+                        <option disabled value="">Please select one</option>
+                        <option value="PARTICIPANT">Participant</option>
+                        <option value="OBSERVER">Observer</option>
+                    </select>
+                    <button id="join__button" type="submit" :disabled="!(name && selected)">Join</button>
+                </form>
+            </div>
+            <div v-else>
+                <div id="message">{{ message }}</div>
+                <div id="cards">
+                    <button class="card" v-for="card in cards" @click="vote(card)">{{card}}</button>
+                    <p v-if="cardsError">{{cardsError}}</p>
+                </div>
 
-          const voting = (v) => {
-              ws.send(JSON.stringify({event:'VOTE',vote: v}));
-          }
+                <div v-if="isAdmin" class="admin">
+                    <hr/>
+                    <button @click="showVote">Show Vote</button>
+                    <button @click="clearVote">Clear Vote</button>
+                </div>
+                <hr/>
+                <div id="members">
 
-          const showVote = () => {
-              ws.send(JSON.stringify({event:'RESULT'}));
-          }
-          const clearVote = () => {
-              ws.send(JSON.stringify({event:'RESET'}));
-          }
-      </script>
+                    <table>
+                        <tbody>
+                            <tr :id="member.id" v-for="member in members" :style="{backgroundColor: statusColor(member) }" >
+                                <td>{{member.id}}</td>
+                                <td>{{member.name}}</td>
+                                <td>{{member.role}}</td>
+                                <td>{{member.vote}}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <hr/>
+            <footer>
+                <span>Ws Status: {{wsStatus}}</span>
+            </footer>
+        </div>
+
+        <script>
+            const roomId = location.pathname.split("/")[2]
+            console.log(roomId)
+            const { createApp, ref, onMounted, computed , watch} = Vue
+            createApp({
+                setup() {
+                    const message = ref('Hello vue!')
+                    const cards = ref([])
+                    const cardsError = ref(null)
+                    const members = ref([])
+                    const name = ref("")
+                    const selected = ref("")
+                    const wsStatus = ref("UNKNOWN")
+                    const hasJoin = ref(false)
+                    // const isAdmin = computed(() => {
+                    //     return selected.value === "OBSERVER"
+                    // })
+                    const isAdmin = ref(false)
+                    let ws ;
+
+                    watch(members, (m) => {
+                        document.title = `Room Count ${m.length}`
+                    })
+
+                    if(sessionStorage.getItem("plan-poker-user")) {
+                        const u = JSON.parse(sessionStorage.getItem("plan-poker-user"))
+                        name.value = u.name
+                        selected.value = u.role
+                        joinRoom()
+                    }
+
+                    function joinRoom() {
+                        selected.value === "OBSERVER" ? isAdmin.value=true : isAdmin.value=false;
+                        const user = {id: name.value.toLowerCase().replace(/\s/g, ""), name: name.value, role: selected.value}
+                        fetch(`/room/${roomId}/member`,{
+                            method: 'POST',
+                            headers: {'Content-Type': 'application/json'},
+                            body: JSON.stringify({...user, status: true})
+                        })
+                            .then(r => {
+                                fetchCards()
+                                sessionStorage.setItem("plan-poker-user", JSON.stringify(user));
+                                ws = new WebSocket(`ws://${location.host}/ws/room/${roomId}`)
+                                ws.onopen = (e) => {
+                                    wsStatus.value = "Connected!"
+                                    ws.send(JSON.stringify({...user, event: 'JOIN'}));
+                                }
+                                ws.onmessage = (e) => {
+                                    members.value = JSON.parse(e.data);
+                                }
+                                ws.onclose = (e) => {
+                                    wsStatus.value = "Disconnected!"
+                                }
+                            })
+                            .catch(e => {})
+                            .finally(r => {
+                                hasJoin.value = true
+                            })
+                    }
+                    function fetchCards() {
+                        fetch(`/room/${roomId}/cards`, {
+                            method: 'GET',
+                            headers: { 'Content-Type': 'application/json' }
+                        })
+                            .then(res => res.json())
+                            .then(r => cards.value=r)
+                            .catch(e => cardsError.value = e.message)
+                    }
+
+
+                    function vote(e) {
+                        ws.send(JSON.stringify({event:'VOTE',vote: e}));
+                    }
+
+                    const showVote = () => {
+                        ws.send(JSON.stringify({event:'RESULT'}));
+                    }
+
+                    const clearVote = () => {
+                        ws.send(JSON.stringify({event:'RESET'}));
+                    }
+
+                    const statusColor = (member) => {
+                        if (!member.status) {
+                            return "gray"
+                        } else if(member.voted) {
+                            return "yellow"
+                        } else {
+                            return ''
+                        }
+                    }
+
+                    return {
+                        message,
+                        cards,cardsError,
+                        members,
+                        isAdmin,
+                        name,
+                        selected,
+                        wsStatus,
+                        hasJoin,
+                        joinRoom, vote, showVote, clearVote, statusColor
+                    }
+                }
+            }).mount('#app')
+        </script>
     </body>
 </html>

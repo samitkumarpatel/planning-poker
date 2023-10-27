@@ -106,7 +106,7 @@ public class RoomWebSocketHandler implements WebSocketHandler {
                             .map(room -> {
                                 var updateMembers = room.members()
                                         .stream()
-                                        .map(member -> new Member(member.id(), member.role(), member.status(),member.name(),null,false))
+                                        .map(member -> new Member(member.id(), member.role(), member.status(),member.name(),"",false))
                                         .collect(Collectors.toList());
                                 log.info("Reset Members {}", updateMembers);
                                 return new Room(roomUUID,room.cards(),updateMembers);
