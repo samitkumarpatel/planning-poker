@@ -9,6 +9,7 @@ env:
   MAJOR_MINOR_PACKAGE_VERSION: "1.0"
 jobs:
   native-build:
+    if: false
     runs-on: ubuntu-latest
     permissions:
       contents: write
