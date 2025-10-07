@@ -21,7 +21,7 @@ or
 Pull the docker image and Run
 
 ```shell
-docker pull ghcr.io/e-fullstack/planning-poker:1.0.0
+docker pull ghcr.io/samitkumarpatel/planning-poker:1.0.0
 docker run --rm -p 8080:8080
 ```
 

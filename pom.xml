@@ -49,7 +49,7 @@
 		<repository>
 			<id>github</id>
 			<name>GitHub Packages</name>
-			<url>https://maven.pkg.github.com/e-fullstack/planning-poker</url>
+			<url>https://maven.pkg.github.com/samitkumarpatel/planning-poker</url>
 		</repository>
 	</distributionManagement>
 	<build>
